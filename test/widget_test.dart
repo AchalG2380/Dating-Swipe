@@ -1,32 +1,33 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:task/models/dummy_user.dart';
+import 'package:task/dashboard/dummy_user.dart';
 
 void main() {
   group('DummyUser Model Tests', () {
-    test('DummyUser.fromJson creates a valid user object with nested address', () {
-      final json = {
-        'id': 1,
-        'firstName': 'John',
-        'lastName': 'Doe',
-        'image': 'https://example.com/john.png',
-        'age': 25,
-        'gender': 'male',
-        'address': {
-          'city': 'New York',
-        }
-      };
+    test(
+      'DummyUser.fromJson creates a valid user object with nested address',
+      () {
+        final json = {
+          'id': 1,
+          'firstName': 'John',
+          'lastName': 'Doe',
+          'image': 'https://example.com/john.png',
+          'age': 25,
+          'gender': 'male',
+          'address': {'city': 'New York'},
+        };
 
-      final user = DummyUser.fromJson(json);
+        final user = DummyUser.fromJson(json);
 
-      expect(user.id, 1);
-      expect(user.firstName, 'John');
-      expect(user.lastName, 'Doe');
-      expect(user.fullName, 'John Doe');
-      expect(user.image, 'https://example.com/john.png');
-      expect(user.age, 25);
-      expect(user.gender, 'male');
-      expect(user.city, 'New York');
-    });
+        expect(user.id, 1);
+        expect(user.firstName, 'John');
+        expect(user.lastName, 'Doe');
+        expect(user.fullName, 'John Doe');
+        expect(user.image, 'https://example.com/john.png');
+        expect(user.age, 25);
+        expect(user.gender, 'male');
+        expect(user.city, 'New York');
+      },
+    );
 
     test('DummyUser.fromJson fallback values check', () {
       final json = {

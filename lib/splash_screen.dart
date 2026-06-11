@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/auth_controller.dart';
+import 'package:task/core/app_strings.dart';
+import 'auth/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -53,6 +54,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -74,14 +76,14 @@ class _SplashScreenState extends State<SplashScreen>
                   height: 130,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Colors.pinkAccent, Colors.deepOrangeAccent],
+                    gradient: LinearGradient(
+                      colors: [colorScheme.primary, Colors.deepOrangeAccent],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.pinkAccent.withOpacity(0.4),
+                        color: colorScheme.primary.withValues(alpha: 0.4),
                         blurRadius: 24,
                         spreadRadius: 4,
                       ),
@@ -96,8 +98,8 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: 40),
               // Brand Name
-              const Text(
-                'Dating Swipe',
+              Text(
+                AppStrings.appName,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 38,
@@ -105,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
                   letterSpacing: 2,
                   shadows: [
                     Shadow(
-                      color: Colors.pinkAccent,
+                      color: colorScheme.primary,
                       offset: Offset(0, 0),
                       blurRadius: 10,
                     ),
@@ -117,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
               Text(
                 'Match, Swipe & Connect',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 15,
                   fontWeight: FontWeight.w300,
                   letterSpacing: 1.5,

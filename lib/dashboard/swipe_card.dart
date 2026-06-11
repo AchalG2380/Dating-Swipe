@@ -1,6 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../models/dummy_user.dart';
+import 'dummy_user.dart';
+import 'package:get/get.dart';
+import '../core/app_color.dart';
+import 'card_gesture_controller.dart';
 
 class SwipeCard extends StatefulWidget {
   final DummyUser user;
@@ -18,15 +21,19 @@ class SwipeCard extends StatefulWidget {
   State<SwipeCard> createState() => _SwipeCardState();
 }
 
-class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMixin {
+class _SwipeCardState extends State<SwipeCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<Offset> _swipeAnimation;
-  Offset _dragOffset = Offset.zero;
-  bool _isDragging = false;
+  late final CardGestureController gesture;
+
+  // Offset _dragOffset = Offset.zero;
+  // bool _isDragging = false;
 
   @override
   void initState() {
     super.initState();
+    gesture = Get.put(CardGestureController(), tag: widget.user.id.toString());
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -36,21 +43,18 @@ class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMix
   @override
   void dispose() {
     _animController.dispose();
+    Get.delete<CardGestureController>(tag: widget.user.id.toString());
     super.dispose();
   }
 
   void _onPanStart(DragStartDetails details) {
     if (!widget.isFrontCard) return;
-    setState(() {
-      _isDragging = true;
-    });
+    gesture.startDragging();
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
     if (!widget.isFrontCard) return;
-    setState(() {
-      _dragOffset += details.delta;
-    });
+    gesture.updateOffset(details.delta);
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -58,51 +62,48 @@ class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMix
     final screenWidth = MediaQuery.of(context).size.width;
     final threshold = screenWidth * 0.35;
 
-    if (_dragOffset.dx > threshold) {
+    if (gesture.dragOffset.value.dx > threshold) {
       // Swipe Right (Accept)
       _animateSwipe(const Offset(600, 0), true);
-    } else if (_dragOffset.dx < -threshold) {
+    } else if (gesture.dragOffset.value.dx < -threshold) {
       // Swipe Left (Reject)
       _animateSwipe(const Offset(-600, 0), false);
     } else {
       // Snap Back
-      setState(() {
-        _isDragging = false;
-      });
+      gesture.isDragging.value = false;
       _animController.forward(from: 0).then((_) {
-        setState(() {
-          _dragOffset = Offset.zero;
-        });
+        gesture.dragOffset.value = Offset.zero;
       });
-      _swipeAnimation = Tween<Offset>(
-        begin: _dragOffset,
-        end: Offset.zero,
-      ).animate(
-        CurvedAnimation(parent: _animController, curve: Curves.easeOutBack),
-      )..addListener(() {
-          if (!_isDragging) {
-            setState(() {
-              _dragOffset = _swipeAnimation.value;
+      _swipeAnimation =
+          Tween<Offset>(
+              begin: gesture.dragOffset.value,
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(
+                parent: _animController,
+                curve: Curves.easeOutBack,
+              ),
+            )
+            ..addListener(() {
+              if (!gesture.isDragging.value) {
+                gesture.dragOffset.value = _swipeAnimation.value;
+              }
             });
-          }
-        });
     }
   }
 
   void _animateSwipe(Offset targetOffset, bool isAccepted) {
-    setState(() {
-      _isDragging = false;
-    });
-    _swipeAnimation = Tween<Offset>(
-      begin: _dragOffset,
-      end: targetOffset,
-    ).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
-    )..addListener(() {
-        setState(() {
-          _dragOffset = _swipeAnimation.value;
-        });
-      });
+    gesture.isDragging.value = false;
+    _swipeAnimation =
+        Tween<Offset>(
+            begin: gesture.dragOffset.value,
+            end: targetOffset,
+          ).animate(
+            CurvedAnimation(parent: _animController, curve: Curves.easeOut),
+          )
+          ..addListener(() {
+            gesture.dragOffset.value = _swipeAnimation.value;
+          });
 
     _animController.forward(from: 0).then((_) {
       widget.onSwipe(isAccepted);
@@ -113,32 +114,29 @@ class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    // Calculate rotation angle based on horizontal drag offset
-    double angle = 0.0;
-    if (widget.isFrontCard) {
-      angle = (_dragOffset.dx / size.width) * (pi / 12); // Max 15 degrees tilt
-    }
-
-    // Swipe action indicators scale
-    double likeOpacity = 0.0;
-    double nopeOpacity = 0.0;
-    if (widget.isFrontCard && _dragOffset.dx > 0) {
-      likeOpacity = min(_dragOffset.dx / (size.width * 0.25), 1.0);
-    } else if (widget.isFrontCard && _dragOffset.dx < 0) {
-      nopeOpacity = min(-_dragOffset.dx / (size.width * 0.25), 1.0);
-    }
-
     return GestureDetector(
       onPanStart: _onPanStart,
       onPanUpdate: _onPanUpdate,
       onPanEnd: _onPanEnd,
-      child: Transform.translate(
-        offset: _dragOffset,
-        child: Transform.rotate(
-          angle: angle,
-          child: _buildCardContent(likeOpacity, nopeOpacity),
-        ),
-      ),
+      child: Obx(() {
+        final offset = gesture.dragOffset.value;
+        double angle = widget.isFrontCard
+            ? (offset.dx / size.width) * (pi / 12)
+            : 0.0;
+        double likeOpacity = (widget.isFrontCard && offset.dx > 0)
+            ? min(offset.dx / (size.width * 0.25), 1.0)
+            : 0.0;
+        double nopeOpacity = (widget.isFrontCard && offset.dx < 0)
+            ? min(-offset.dx / (size.width * 0.25), 1.0)
+            : 0.0;
+        return Transform.translate(
+          offset: offset,
+          child: Transform.rotate(
+            angle: angle,
+            child: _buildCardContent(likeOpacity, nopeOpacity),
+          ),
+        );
+      }),
     );
   }
 
@@ -167,26 +165,23 @@ class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMix
               loadingBuilder: (context, child, progress) {
                 if (progress == null) return child;
                 return Container(
-                  color: const Color(0xFF1E1E2C),
+                  color: AppColor.surface,
                   child: Center(
                     child: CircularProgressIndicator(
                       value: progress.expectedTotalBytes != null
-                          ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                          ? progress.cumulativeBytesLoaded /
+                                progress.expectedTotalBytes!
                           : null,
-                      color: Colors.pinkAccent,
+                      color: AppColor.primary,
                     ),
                   ),
                 );
               },
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: const Color(0xFF1E1E2C),
+                  color: AppColor.surface,
                   child: const Center(
-                    child: Icon(
-                      Icons.person,
-                      size: 80,
-                      color: Colors.grey,
-                    ),
+                    child: Icon(Icons.person, size: 80, color: Colors.grey),
                   ),
                 );
               },
@@ -197,10 +192,10 @@ class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMix
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.6),
-                    Colors.transparent,
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.85),
+                    Colors.black.withValues(alpha: 0.6),
+                    AppColor.transparent,
+                    AppColor.transparent,
+                    Colors.black.withValues(alpha: 0.85),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -240,11 +235,14 @@ class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMix
                       const SizedBox(width: 8),
                       // Gender tag
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: widget.user.gender == 'female'
-                              ? Colors.pink.withOpacity(0.8)
-                              : Colors.blue.withOpacity(0.8),
+                              ? Colors.pink.withValues(alpha: 0.8)
+                              : Colors.blue.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -261,9 +259,9 @@ class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMix
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on,
-                        color: Colors.pinkAccent,
+                        color: AppColor.primary,
                         size: 18,
                       ),
                       const SizedBox(width: 4),
@@ -300,16 +298,19 @@ class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMix
                   child: Opacity(
                     opacity: likeOpacity,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.green, width: 4),
+                        border: Border.all(color: AppColor.likeGreen, width: 4),
                         borderRadius: BorderRadius.circular(12),
                         color: Colors.black26,
                       ),
                       child: const Text(
                         'LIKE',
                         style: TextStyle(
-                          color: Colors.green,
+                          color: AppColor.likeGreen,
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2,
@@ -330,16 +331,19 @@ class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMix
                   child: Opacity(
                     opacity: nopeOpacity,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.red, width: 4),
+                        border: Border.all(color: AppColor.nopeRed, width: 4),
                         borderRadius: BorderRadius.circular(12),
                         color: Colors.black26,
                       ),
                       child: const Text(
                         'NOPE',
                         style: TextStyle(
-                          color: Colors.red,
+                          color: AppColor.nopeRed,
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2,

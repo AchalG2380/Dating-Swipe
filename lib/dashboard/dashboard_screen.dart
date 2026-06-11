@@ -1,52 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/auth_controller.dart';
-import '../controllers/swipe_controller.dart';
-import '../models/dummy_user.dart';
-import 'widgets/swipe_card.dart';
+import 'package:task/core/app_strings.dart';
+import '../auth/auth_controller.dart';
+import 'swipe_controller.dart';
+import 'dummy_user.dart';
+import 'swipe_card.dart';
+import 'package:task/core/app_color.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-  int _currentIndex = 0;
-  final swipeController = Get.put(SwipeController());
-
-  @override
   Widget build(BuildContext context) {
-    final List<Widget> tabs = [
-      _buildSwipeTab(),
-      _buildMatchesTab(),
-      _buildProfileTab(),
-    ];
+    // Register SwipeController once for the whole dashboard
+    final swipeController = Get.put(SwipeController());
+    const tabs = [_SwipeTab(), _MatchesTab(), _ProfileTab()];
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0C20),
-      body: IndexedStack(index: _currentIndex, children: tabs),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.08), width: 1),
-          ),
+    return Obx(
+      () => Scaffold(
+        backgroundColor: AppColor.background,
+        body: IndexedStack(
+          index: swipeController.currentTabIndex.value,
+          children: tabs,
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-            // Refresh lists when entering matches tab
-            if (index == 1) {
-              swipeController.loadSwipedUsersFromDB();
-            }
-          },
-          backgroundColor: const Color(0xFF0F0C20),
-          selectedItemColor: Colors.pinkAccent,
-          unselectedItemColor: Colors.white.withOpacity(0.4),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: swipeController.currentTabIndex.value,
+          onTap: swipeController.changeTab,
+          backgroundColor: AppColor.background,
+          selectedItemColor: AppColor.primary,
+          unselectedItemColor: Colors.white.withValues(alpha: 0.4),
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
           selectedLabelStyle: const TextStyle(
@@ -54,20 +36,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             fontSize: 12,
           ),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.explore_outlined),
-              activeIcon: Icon(Icons.explore, color: Colors.pinkAccent),
+              icon: const Icon(Icons.explore_outlined),
+              activeIcon: Icon(Icons.explore, color: AppColor.primary),
               label: 'Discover',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.favorite_border),
-              activeIcon: Icon(Icons.favorite, color: Colors.pinkAccent),
+              icon: const Icon(Icons.favorite_border),
+              activeIcon: Icon(Icons.favorite, color: AppColor.primary),
               label: 'Matches',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person, color: Colors.pinkAccent),
+              icon: const Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person, color: AppColor.primary),
               label: 'Profile',
             ),
           ],
@@ -75,10 +57,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+}
 
-  // --- SWIPE TAB ---
+// ==========================================
+// ACTION BUTTON WIDGET
+// ==========================================
 
-  Widget _buildSwipeTab() {
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onPressed;
+  final bool isSmall;
+
+  const _ActionButton({
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+    this.isSmall = false,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final size = isSmall ? 52.0 : 68.0;
+    final iconSize = isSmall ? 24.0 : 32.0;
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColor.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: onPressed != null
+              ? color.withValues(alpha: 0.3)
+              : Colors.white12,
+          width: 2,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onPressed,
+          child: Center(
+            child: Icon(
+              icon,
+              color: onPressed != null ? color : Colors.white24,
+              size: iconSize,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// --- SWIPE TAB ---
+
+class _SwipeTab extends StatelessWidget {
+  const _SwipeTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final swipeController = Get.find<SwipeController>();
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -88,24 +135,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.favorite,
-                      color: Colors.pinkAccent,
-                      size: 28,
+                const Icon(Icons.favorite, color: AppColor.primary, size: 28),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    AppStrings.appName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'HeartSync',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh, color: Colors.white70),
@@ -121,7 +162,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Obx(() {
                 if (swipeController.isLoading.value) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Colors.pinkAccent),
+                    child: CircularProgressIndicator(color: AppColor.primary),
                   );
                 }
 
@@ -145,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ElevatedButton(
                           onPressed: () => swipeController.loadAllData(),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.pinkAccent,
+                            backgroundColor: AppColor.primary,
                             foregroundColor: Colors.white,
                           ),
                           child: const Text('Try Again'),
@@ -188,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           icon: const Icon(Icons.restore),
                           label: const Text('Reset Swipe History'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.pinkAccent,
+                            backgroundColor: AppColor.primary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -204,13 +245,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 }
 
+                final count = users.length.clamp(0, 2);
                 return Stack(
-                  children: List.generate(users.length > 2 ? 2 : users.length, (
-                    index,
-                  ) {
+                  children: List.generate(count, (index) {
                     // Render in reverse so top card sits at the front
-                    final reversedIndex =
-                        (users.length > 2 ? 2 : users.length) - 1 - index;
+                    final reversedIndex = count - 1 - index;
                     final user = users[reversedIndex];
                     final isFront = reversedIndex == 0;
 
@@ -249,9 +288,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Nope Button
-                  _buildActionButton(
+                  _ActionButton(
                     icon: Icons.close,
-                    color: Colors.redAccent,
+                    color: AppColor.error,
                     onPressed: hasUsers
                         ? () {
                             final topUser = users.first;
@@ -261,7 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(width: 24),
                   // Reset / Reload Button
-                  _buildActionButton(
+                  _ActionButton(
                     icon: Icons.rotate_left,
                     color: Colors.blueAccent,
                     isSmall: true,
@@ -271,7 +310,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(width: 24),
                   // Like Button
-                  _buildActionButton(
+                  _ActionButton(
                     icon: Icons.favorite,
                     color: Colors.greenAccent,
                     onPressed: hasUsers
@@ -290,68 +329,283 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+}
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback? onPressed,
-    bool isSmall = false,
-  }) {
-    final size = isSmall ? 52.0 : 68.0;
-    final iconSize = isSmall ? 24.0 : 32.0;
+// --- PROFILE TAB ---
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color(0xFF1E1E2C),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.25),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color: onPressed != null ? color.withOpacity(0.3) : Colors.white12,
-          width: 2,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onPressed,
-          child: Center(
-            child: Icon(
-              icon,
-              color: onPressed != null ? color : Colors.white24,
-              size: iconSize,
+class _ProfileTab extends StatelessWidget {
+  const _ProfileTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = AuthController.to;
+    final swipeController = Get.find<SwipeController>();
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 24),
+            // Avatar Placeholder
+            Center(
+              child: Stack(
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [AppColor.primary, AppColor.secondary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.primary.withValues(alpha: 0.2),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        auth.currentUser.value?.name.isNotEmpty == true
+                            ? auth.currentUser.value!.name
+                                  .substring(0, 1)
+                                  .toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 4,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: AppColor.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(height: 24),
+
+            // Profile info text
+            Text(
+              auth.currentUser.value?.name ?? 'User Name',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              auth.currentUser.value?.email ?? 'user@example.com',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 40),
+
+            // Settings options list
+            _buildProfileOption(
+              context,
+              icon: Icons.verified_user_outlined,
+              title: 'Account Status',
+              subtitle: 'Active member',
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: const Text(
+                  'Verified',
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildProfileOption(
+              context,
+              icon: Icons.history,
+              title: 'Swipe Stats',
+              subtitle: 'View local data resets',
+              onTap: () {
+                Get.dialog(
+                  AlertDialog(
+                    backgroundColor: AppColor.surface,
+                    title: const Text(
+                      'Reset Swipes?',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    content: const Text(
+                      'This will delete all swipes from your local database and load users fresh from the API.',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          swipeController.resetSwipes();
+                          Get.back();
+                          Get.snackbar(
+                            'Reset Successful',
+                            'Swipe database has been cleared!',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.blueAccent,
+                            colorText: Colors.white,
+                          );
+                        },
+                        child: const Text(
+                          'Reset',
+                          style: TextStyle(color: AppColor.error),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildProfileOption(
+              context,
+              icon: Icons.security_outlined,
+              title: 'Privacy & Security',
+              subtitle: 'SQLite secure credentials storage',
+            ),
+
+            const SizedBox(height: 50),
+
+            // Logout Button
+            ElevatedButton.icon(
+              onPressed: () => auth.logout(),
+              icon: const Icon(Icons.logout),
+              label: const Text('Log Out'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.error.withValues(alpha: 0.1),
+                foregroundColor: AppColor.error,
+                side: const BorderSide(color: AppColor.error, width: 1.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
+                ),
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
   }
 
-  // --- MATCHES TAB ---
+  Widget _buildProfileOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColor.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColor.primary.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: AppColor.primary, size: 22),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.4),
+            fontSize: 12,
+          ),
+        ),
+        trailing:
+            trailing ??
+            Icon(
+              Icons.chevron_right,
+              color: Colors.white.withValues(alpha: 0.3),
+            ),
+      ),
+    );
+  }
+}
 
-  Widget _buildMatchesTab() {
+class _MatchesTab extends StatelessWidget {
+  const _MatchesTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final swipeController = Get.find<SwipeController>();
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0F0C20),
+        backgroundColor: AppColor.background,
         appBar: AppBar(
-          backgroundColor: const Color(0xFF0F0C20),
+          backgroundColor: AppColor.background,
           title: const Text(
             'My Swipes',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           bottom: TabBar(
-            dividerColor: Colors.white.withOpacity(0.08),
-            indicatorColor: Colors.pinkAccent,
-            labelColor: Colors.pinkAccent,
+            dividerColor: Colors.white.withValues(alpha: 0.08),
+            indicatorColor: AppColor.primary,
+            labelColor: AppColor.primary,
             unselectedLabelColor: Colors.white38,
             tabs: const [
               Tab(
@@ -360,7 +614,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Icon(Icons.favorite, size: 18),
                     SizedBox(width: 8),
-                    Text('Liked'),
+                    Text(AppStrings.Liked),
                   ],
                 ),
               ),
@@ -370,7 +624,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Icon(Icons.heart_broken, size: 18),
                     SizedBox(width: 8),
-                    Text('Noped'),
+                    Text(AppStrings.Noped),
                   ],
                 ),
               ),
@@ -422,7 +676,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -434,7 +688,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   user.image,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
-                    color: const Color(0xFF1E1E2C),
+                    color: AppColor.surface,
                     child: const Icon(
                       Icons.person,
                       color: Colors.white38,
@@ -448,7 +702,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     gradient: LinearGradient(
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.75),
+                        Colors.black.withValues(alpha: 0.75),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -466,8 +720,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: isLiked
-                          ? Colors.green.withOpacity(0.8)
-                          : Colors.red.withOpacity(0.8),
+                          ? AppColor.likeGreen.withValues(alpha: 0.8)
+                          : AppColor.nopeRed.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -502,7 +756,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           const Icon(
                             Icons.location_on,
-                            color: Colors.pinkAccent,
+                            color: AppColor.primary,
                             size: 12,
                           ),
                           const SizedBox(width: 2),
@@ -510,7 +764,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: Text(
                               user.city,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
+                                color: Colors.white.withValues(alpha: 0.7),
                                 fontSize: 11,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -526,243 +780,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         );
       },
-    );
-  }
-
-  // --- PROFILE TAB ---
-
-  Widget _buildProfileTab() {
-    final auth = AuthController.to;
-
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            // Avatar Placeholder
-            Center(
-              child: Stack(
-                children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Colors.pinkAccent, Colors.purpleAccent],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.pinkAccent.withOpacity(0.2),
-                          blurRadius: 16,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        auth.currentUser.value?.name.isNotEmpty == true
-                            ? auth.currentUser.value!.name
-                                  .substring(0, 1)
-                                  .toUpperCase()
-                            : 'U',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 4,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.pinkAccent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Profile info text
-            Text(
-              auth.currentUser.value?.name ?? 'User Name',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              auth.currentUser.value?.email ?? 'user@example.com',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            // Settings options list
-            _buildProfileOption(
-              icon: Icons.verified_user_outlined,
-              title: 'Account Status',
-              subtitle: 'Active member',
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withOpacity(0.5)),
-                ),
-                child: const Text(
-                  'Verified',
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildProfileOption(
-              icon: Icons.history,
-              title: 'Swipe Stats',
-              subtitle: 'View local data resets',
-              onTap: () {
-                Get.dialog(
-                  AlertDialog(
-                    backgroundColor: const Color(0xFF1E1E2C),
-                    title: const Text(
-                      'Reset Swipes?',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    content: const Text(
-                      'This will delete all swipes from your local database and load users fresh from the API.',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(color: Colors.white54),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          swipeController.resetSwipes();
-                          Get.back();
-                          Get.snackbar(
-                            'Reset Successful',
-                            'Swipe database has been cleared!',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.blueAccent,
-                            colorText: Colors.white,
-                          );
-                        },
-                        child: const Text(
-                          'Reset',
-                          style: TextStyle(color: Colors.redAccent),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildProfileOption(
-              icon: Icons.security_outlined,
-              title: 'Privacy & Security',
-              subtitle: 'SQLite secure credentials storage',
-            ),
-
-            const SizedBox(height: 50),
-
-            // Logout Button
-            ElevatedButton.icon(
-              onPressed: () => auth.logout(),
-              icon: const Icon(Icons.logout),
-              label: const Text('Log Out'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent.withOpacity(0.1),
-                foregroundColor: Colors.redAccent,
-                side: const BorderSide(color: Colors.redAccent, width: 1.5),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 14,
-                ),
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    VoidCallback? onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2C),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.04)),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.pinkAccent.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: Colors.pinkAccent, size: 22),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
-        ),
-        trailing:
-            trailing ??
-            Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.3)),
-      ),
     );
   }
 }
