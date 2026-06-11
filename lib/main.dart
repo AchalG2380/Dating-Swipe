@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/core/app_color.dart';
-import 'auth/auth_controller.dart';
-import 'auth/login.dart';
-import 'auth/account.dart';
-import 'splash_screen.dart';
-import 'dashboard/dashboard_screen.dart';
+import 'package:task/core/shared_prefs.dart';
+import 'auth/controllers/auth_controller.dart';
+import 'auth/screens/login_screen.dart';
+import 'auth/screens/signup_screen.dart';
+import 'onboarding/screens/splash_screen.dart';
+import 'dashboard/screens/dashboard_screen.dart';
 import 'database/db_initializer.dart';
-import 'services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Initialize Database Factory (Desktop FFI or Web stub)
   initDatabaseFactory();
-  // Initialize Storage Service (awaits SharedPreferences load)
-  await Get.putAsync(() => StorageService().init());
+  // Initialize SharedPreferences utility
+  await SharedPrefs.init();
   // Initialize Global Auth Controller
   Get.put(AuthController(), permanent: true);
   runApp(const MyApp());

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:task/dashboard/dummy_user.dart';
+import 'package:task/dashboard/models/dummy_user.dart';
 
 void main() {
   group('DummyUser Model Tests', () {

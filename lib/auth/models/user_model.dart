@@ -1,10 +1,10 @@
-class AppUser {
+class UserModel {
   final int? id;
   final String name;
   final String email;
   final String password;
 
-  AppUser({
+  UserModel({
     this.id,
     required this.name,
     required this.email,
@@ -20,8 +20,8 @@ class AppUser {
     };
   }
 
-  factory AppUser.fromMap(Map<String, dynamic> map) {
-    return AppUser(
+  factory UserModel.fromMap(Map<String, dynamic> map) {
+    return UserModel(
       id: map['id'] as int?,
       name: map['name'] as String,
       email: map['email'] as String,

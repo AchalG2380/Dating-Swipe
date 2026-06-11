@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/core/app_strings.dart';
-import 'auth/auth_controller.dart';
+import '../../auth/controllers/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -117,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 10),
               // Brand Tagline
               Text(
-                'Match, Swipe & Connect',
+                AppStrings.splashSubtitle,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 15,

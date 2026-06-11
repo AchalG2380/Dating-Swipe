@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/core/app_strings.dart';
-import '../auth/auth_controller.dart';
-import 'swipe_controller.dart';
-import 'dummy_user.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../controllers/swipe_controller.dart';
+import '../models/dummy_user.dart';
 import 'swipe_card.dart';
 import 'package:task/core/app_color.dart';
 
@@ -40,17 +40,17 @@ class DashboardScreen extends StatelessWidget {
             BottomNavigationBarItem(
               icon: const Icon(Icons.explore_outlined),
               activeIcon: Icon(Icons.explore, color: AppColor.primary),
-              label: 'Discover',
+              label: AppStrings.discover,
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.favorite_border),
               activeIcon: Icon(Icons.favorite, color: AppColor.primary),
-              label: 'Matches',
+              label: AppStrings.matches,
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person, color: AppColor.primary),
-              label: 'Profile',
+              label: AppStrings.profile,
             ),
           ],
         ),
@@ -189,7 +189,7 @@ class _SwipeTab extends StatelessWidget {
                             backgroundColor: AppColor.primary,
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('Try Again'),
+                          child: const Text(AppStrings.tryAgain),
                         ),
                       ],
                     ),
@@ -210,7 +210,7 @@ class _SwipeTab extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'No more profiles around you!',
+                          AppStrings.noMoreProfilesTitle,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -219,7 +219,7 @@ class _SwipeTab extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Tap below to reset your swipe history\nand explore profiles again.',
+                          AppStrings.noMoreProfilesSubtitle,
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.white38, fontSize: 13),
                         ),
@@ -227,7 +227,7 @@ class _SwipeTab extends StatelessWidget {
                         ElevatedButton.icon(
                           onPressed: () => swipeController.resetSwipes(),
                           icon: const Icon(Icons.restore),
-                          label: const Text('Reset Swipe History'),
+                          label: const Text(AppStrings.resetSwipeHistory),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColor.primary,
                             foregroundColor: Colors.white,
@@ -428,8 +428,8 @@ class _ProfileTab extends StatelessWidget {
             _buildProfileOption(
               context,
               icon: Icons.verified_user_outlined,
-              title: 'Account Status',
-              subtitle: 'Active member',
+              title: AppStrings.accountStatus,
+              subtitle: AppStrings.activeMember,
               trailing: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -443,7 +443,7 @@ class _ProfileTab extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  'Verified',
+                  AppStrings.verified,
                   style: TextStyle(
                     color: Colors.green,
                     fontSize: 11,
@@ -456,25 +456,25 @@ class _ProfileTab extends StatelessWidget {
             _buildProfileOption(
               context,
               icon: Icons.history,
-              title: 'Swipe Stats',
-              subtitle: 'View local data resets',
+              title: AppStrings.swipeStats,
+              subtitle: AppStrings.viewResets,
               onTap: () {
                 Get.dialog(
                   AlertDialog(
                     backgroundColor: AppColor.surface,
                     title: const Text(
-                      'Reset Swipes?',
+                      AppStrings.resetSwipesTitle,
                       style: TextStyle(color: Colors.white),
                     ),
                     content: const Text(
-                      'This will delete all swipes from your local database and load users fresh from the API.',
+                      AppStrings.resetSwipesContent,
                       style: TextStyle(color: Colors.white70),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Get.back(),
                         child: const Text(
-                          'Cancel',
+                          AppStrings.cancel,
                           style: TextStyle(color: Colors.white54),
                         ),
                       ),
@@ -483,15 +483,15 @@ class _ProfileTab extends StatelessWidget {
                           swipeController.resetSwipes();
                           Get.back();
                           Get.snackbar(
-                            'Reset Successful',
-                            'Swipe database has been cleared!',
+                            AppStrings.resetSuccessTitle,
+                            AppStrings.resetSuccessMessage,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: Colors.blueAccent,
                             colorText: Colors.white,
                           );
                         },
                         child: const Text(
-                          'Reset',
+                          AppStrings.reset,
                           style: TextStyle(color: AppColor.error),
                         ),
                       ),
@@ -504,8 +504,8 @@ class _ProfileTab extends StatelessWidget {
             _buildProfileOption(
               context,
               icon: Icons.security_outlined,
-              title: 'Privacy & Security',
-              subtitle: 'SQLite secure credentials storage',
+              title: AppStrings.privacySecurity,
+              subtitle: AppStrings.sqliteStorage,
             ),
 
             const SizedBox(height: 50),
@@ -514,7 +514,7 @@ class _ProfileTab extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => auth.logout(),
               icon: const Icon(Icons.logout),
-              label: const Text('Log Out'),
+              label: const Text(AppStrings.logOut),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.error.withValues(alpha: 0.1),
                 foregroundColor: AppColor.error,
@@ -599,7 +599,7 @@ class _MatchesTab extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: AppColor.background,
           title: const Text(
-            'My Swipes',
+            AppStrings.mySwipes,
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           bottom: TabBar(
@@ -654,7 +654,7 @@ class _MatchesTab extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              isLiked ? "No liked profiles yet" : "No noped profiles yet",
+              isLiked ? AppStrings.noLikedProfiles : AppStrings.noNopedProfiles,
               style: const TextStyle(color: Colors.white54, fontSize: 15),
             ),
           ],

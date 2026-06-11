@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../services/storage_service.dart';
+import '../core/shared_prefs.dart';
+import '../core/app_constants.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -54,8 +54,7 @@ class DatabaseHelper {
 
   Future<int> insertUser(Map<String, dynamic> user) async {
     if (kIsWeb) {
-      final storage = StorageService.to;
-      final usersStr = storage.getString('web_users');
+      final usersStr = SharedPrefs.getString(StorageKeys.webUsers);
       List<dynamic> usersList = [];
       if (usersStr != null) {
         try {
@@ -78,7 +77,7 @@ class DatabaseHelper {
       newUser['id'] = nextId;
       usersList.add(newUser);
 
-      await storage.setString('web_users', json.encode(usersList));
+      await SharedPrefs.setString(StorageKeys.webUsers, json.encode(usersList));
       return nextId;
     } else {
       final db = await instance.database;
@@ -88,8 +87,7 @@ class DatabaseHelper {
 
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
     if (kIsWeb) {
-      final storage = StorageService.to;
-      final usersStr = storage.getString('web_users');
+      final usersStr = SharedPrefs.getString(StorageKeys.webUsers);
 
       if (usersStr == null) return null;
       try {
@@ -124,8 +122,7 @@ class DatabaseHelper {
 
   Future<int> insertSwipe(Map<String, dynamic> swipe) async {
     if (kIsWeb) {
-      final storage = StorageService.to;
-      final swipesStr = storage.getString('web_swipes');
+      final swipesStr = SharedPrefs.getString(StorageKeys.webSwipes);
       List<dynamic> swipesList = [];
       if (swipesStr != null) {
         try {
@@ -141,7 +138,7 @@ class DatabaseHelper {
         swipesList.add(newSwipe);
       }
 
-      await storage.setString('web_swipes', json.encode(swipesList));
+      await SharedPrefs.setString(StorageKeys.webSwipes, json.encode(swipesList));
       return 1;
     } else {
       final db = await instance.database;
@@ -155,8 +152,7 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getSwipesByStatus(String status) async {
     if (kIsWeb) {
-      final storage = StorageService.to;
-      final swipesStr = storage.getString('web_swipes');
+      final swipesStr = SharedPrefs.getString(StorageKeys.webSwipes);
       if (swipesStr == null) return [];
       try {
         final swipesList = json.decode(swipesStr) as List<dynamic>;
@@ -175,8 +171,7 @@ class DatabaseHelper {
 
   Future<List<int>> getAllSwipedIds() async {
     if (kIsWeb) {
-      final storage = StorageService.to;
-      final swipesStr = storage.getString('web_swipes');
+      final swipesStr = SharedPrefs.getString(StorageKeys.webSwipes);
       if (swipesStr == null) return [];
       try {
         final swipesList = json.decode(swipesStr) as List<dynamic>;
@@ -193,8 +188,7 @@ class DatabaseHelper {
 
   Future<void> clearSwipes() async {
     if (kIsWeb) {
-      final storage = StorageService.to;
-      await storage.remove('web_swipes');
+      await SharedPrefs.remove(StorageKeys.webSwipes);
     } else {
       final db = await instance.database;
       await db.delete('swipes');

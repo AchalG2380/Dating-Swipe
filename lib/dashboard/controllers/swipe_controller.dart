@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import '../database/db_helper.dart';
-import 'dummy_user.dart';
+import '../../database/db_helper.dart';
+import '../models/dummy_user.dart';
 
 class SwipeController extends GetxController {
   final RxList<DummyUser> deckUsers = <DummyUser>[].obs;

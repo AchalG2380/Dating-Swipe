@@ -1,14 +1,14 @@
 import 'package:get/get.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
-import '../database/db_helper.dart';
-import 'app_user.dart';
-import '../services/storage_service.dart';
+import '../../database/db_helper.dart';
+import '../models/user_model.dart';
+import '../../core/shared_prefs.dart';
+import '../../core/app_constants.dart';
 
 class AuthController extends GetxController {
   static AuthController get to => Get.find<AuthController>();
 
   final RxBool isLoggedIn = false.obs;
-  final Rxn<AppUser> currentUser = Rxn<AppUser>();
+  final Rxn<UserModel> currentUser = Rxn<UserModel>();
   final RxBool isLoading = false.obs;
 
   @override
@@ -19,19 +19,18 @@ class AuthController extends GetxController {
 
   // Check SharedPreferences if user is already logged in
   Future<void> checkLoginStatus() async {
-    final storage = StorageService.to;
-    final loggedIn = storage.getBool('isLoggedIn');
-    final email = storage.getString('loggedInEmail');
+    final loggedIn = SharedPrefs.getBool(StorageKeys.isLoggedIn);
+    final email = SharedPrefs.getString(StorageKeys.loggedInEmail);
 
     if (loggedIn && email != null) {
       // Load user details from SQLite database
       final userMap = await DatabaseHelper.instance.getUserByEmail(email);
       if (userMap != null) {
-        currentUser.value = AppUser.fromMap(userMap);
+        currentUser.value = UserModel.fromMap(userMap);
         isLoggedIn.value = true;
       } else {
         isLoggedIn.value = false;
-        storage.setBool('isLoggedIn', false);
+        await SharedPrefs.setBool(StorageKeys.isLoggedIn, false);
       }
     } else {
       isLoggedIn.value = false;
@@ -60,13 +59,12 @@ class AuthController extends GetxController {
       await dbHelper.insertUser(userMap);
 
       // Set session after successful registration
-      final storage = StorageService.to;
-      await storage.setBool('isLoggedIn', true);
-      await storage.setString('loggedInEmail', email);
+      await SharedPrefs.setBool(StorageKeys.isLoggedIn, true);
+      await SharedPrefs.setString(StorageKeys.loggedInEmail, email);
 
       final createdUser = await dbHelper.getUserByEmail(email);
       if (createdUser != null) {
-        currentUser.value = AppUser.fromMap(createdUser);
+        currentUser.value = UserModel.fromMap(createdUser);
       }
       isLoggedIn.value = true;
 
@@ -90,16 +88,15 @@ class AuthController extends GetxController {
         return 'Email not found. Please register first.';
       }
 
-      final user = AppUser.fromMap(userMap);
+      final user = UserModel.fromMap(userMap);
       if (user.password != password) {
         isLoading.value = false;
         return 'Incorrect password';
       }
 
       // Set session after successful login
-      final storage = StorageService.to;
-      await storage.setBool('isLoggedIn', true);
-      await storage.setString('loggedInEmail', email);
+      await SharedPrefs.setBool(StorageKeys.isLoggedIn, true);
+      await SharedPrefs.setString(StorageKeys.loggedInEmail, email);
 
       currentUser.value = user;
       isLoggedIn.value = true;
@@ -114,9 +111,8 @@ class AuthController extends GetxController {
 
   // Logout and clear session
   Future<void> logout() async {
-    final storage = StorageService.to;
-    await storage.setBool('isLoggedIn', false);
-    await storage.remove('loggedInEmail');
+    await SharedPrefs.setBool(StorageKeys.isLoggedIn, false);
+    await SharedPrefs.remove(StorageKeys.loggedInEmail);
 
     currentUser.value = null;
     isLoggedIn.value = false;

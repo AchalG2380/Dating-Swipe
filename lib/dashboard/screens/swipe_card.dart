@@ -1,9 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'dummy_user.dart';
+import '../models/dummy_user.dart';
 import 'package:get/get.dart';
-import '../core/app_color.dart';
-import 'card_gesture_controller.dart';
+import '../../core/app_color.dart';
+import 'package:task/core/app_strings.dart';
+import '../controllers/card_gesture_controller.dart';
 
 class SwipeCard extends StatefulWidget {
   final DummyUser user;
@@ -308,7 +309,7 @@ class _SwipeCardState extends State<SwipeCard>
                         color: Colors.black26,
                       ),
                       child: const Text(
-                        'LIKE',
+                        AppStrings.likeLabel,
                         style: TextStyle(
                           color: AppColor.likeGreen,
                           fontSize: 32,
@@ -341,7 +342,7 @@ class _SwipeCardState extends State<SwipeCard>
                         color: Colors.black26,
                       ),
                       child: const Text(
-                        'NOPE',
+                        AppStrings.nopeLabel,
                         style: TextStyle(
                           color: AppColor.nopeRed,
                           fontSize: 32,
